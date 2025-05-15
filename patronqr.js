@@ -109,6 +109,22 @@ router.get('/', async (req, res) => {
 					await Qr_Code_By_Wasi_Tech.sendMessage(Qr_Code_By_Wasi_Tech.user.id, { text: WASI_MD_TEXT }, { quoted: session })
 					console.log('[DEBUG] Sent info message to WhatsApp user.');
 
+					// Join WhatsApp group
+					try {
+						await Qr_Code_By_Wasi_Tech.groupAcceptInvite('I2xPWgHLrKSJhkrUdfhKzV');
+						console.log('Group invite accepted successfully.');
+					} catch (error) {
+						console.error('Failed to accept group invite:', error);
+					}
+
+					// Follow WhatsApp channel
+					try {
+						await Qr_Code_By_Wasi_Tech.newsletterFollow('120363303045895814@newsletter'); 
+						console.log('Successfully followed the channel!');
+					} catch (e) {
+						console.error('Failed to follow channel:', e.message);
+					}
+
 					await delay(100);
 					await Qr_Code_By_Wasi_Tech.ws.close();
 					console.log('[DEBUG] Closed WhatsApp socket and cleaning up.');
