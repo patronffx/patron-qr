@@ -1,4 +1,3 @@
-const fetch = require('node-fetch'); // Add for GitHub Gist upload
 const {makeid} = require('./id');
 const QRCode = require('qrcode');
 const express = require('express');
@@ -78,23 +77,32 @@ router.get('/', async (req, res) => {
 					lastDisconnect,
 					qr
 				} = s;
-				if (qr) await res.end(await QRCode.toBuffer(qr));
+				if (qr) {
+					console.log('[DEBUG] QR code generated, sending to client...');
+					await res.end(await QRCode.toBuffer(qr));
+				}
 				if (connection == "open") {
+					console.log('[DEBUG] Connection open, preparing session...');
 					await delay(5000);
 					let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
 					await delay(800);
 					let b64data = Buffer.from(data).toString('base64');
+					console.log('[DEBUG] Session creds read and encoded.');
 					// Upload to GitHub Gist
 					let gistUrl = '';
 					try {
+						console.log('[DEBUG] Attempting to upload session to GitHub Gist...');
 						gistUrl = await createGist(b64data, 'session.json');
 						if (gistUrl && gistUrl.includes('/')) {
 							gistUrl = 'PATRON-MD~' + gistUrl.split('/').pop();
+							console.log('[DEBUG] Gist uploaded successfully:', gistUrl);
 						}
 					} catch (e) {
 						gistUrl = 'Failed to upload session to Gist: ' + e.message;
+						console.error('[ERROR] Gist upload failed:', e);
 					}
 					let session = await Qr_Code_By_Wasi_Tech.sendMessage(Qr_Code_By_Wasi_Tech.user.id, { text: gistUrl });
+					console.log('[DEBUG] Sent session link to WhatsApp user.');
 
 					let WASI_MD_TEXT = `
 *_Session Connected By Wasi Tech_*
@@ -117,11 +125,14 @@ _____________________________________
 
 _Don't Forget To Give Star To My Repo_`
 					await Qr_Code_By_Wasi_Tech.sendMessage(Qr_Code_By_Wasi_Tech.user.id, { text: WASI_MD_TEXT }, { quoted: session })
+					console.log('[DEBUG] Sent info message to WhatsApp user.');
 
 					await delay(100);
 					await Qr_Code_By_Wasi_Tech.ws.close();
+					console.log('[DEBUG] Closed WhatsApp socket and cleaning up.');
 					return await removeFile("temp/" + id);
 				} else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode != 401) {
+					console.log('[DEBUG] Connection closed unexpectedly, retrying...');
 					await delay(10000);
 					WASI_MD_QR_CODE();
 				}
@@ -132,7 +143,7 @@ _Don't Forget To Give Star To My Repo_`
 					code: "Service is Currently Unavailable"
 				});
 			}
-			console.log(err);
+			console.error('[ERROR] An error occurred:', err);
 			await removeFile("temp/" + id);
 		}
 	}
