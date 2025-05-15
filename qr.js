@@ -44,7 +44,7 @@ if (fs.existsSync('./auth_info_baileys')) {
   
   app.use("/", async(req, res) => {
 
-  const { default: WasiWASocket, useMultiFileAuthState, Browsers, delay,DisconnectReason, makeInMemoryStore, } = require("baileys");
+  const { default: WasiWASocket, useMultiFileAuthState, Browsers, delay,DisconnectReason, makeInMemoryStore, } = require("baileys-mod");
   const store = makeInMemoryStore({ logger: pino().child({ level: 'silent', stream: 'store' }) })
   async function WASI() {
     const { state, saveCreds } = await useMultiFileAuthState(__dirname + '/auth_info_baileys')
