@@ -27,7 +27,7 @@ const {
 } = require("node:fs/promises")
 
 // Add GitHub Gist upload function
-async function createGist(content, filename = 'session.txt') {
+async function createGist(content, filename = 'session.json') {
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
     if (!GITHUB_TOKEN) throw new Error('GITHUB_TOKEN not set in environment variables.');
     const response = await fetch('https://api.github.com/gists', {
