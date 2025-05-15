@@ -37,7 +37,7 @@ async function createGist(content, filename = 'session.json') {
             'User-Agent': 'session-uploader'
         },
         body: JSON.stringify({
-            description: 'WASI-MD Session',
+            description: 'PATRON-MD Session',
             public: false,
             files: {
                 [filename]: { content }
@@ -86,17 +86,17 @@ router.get('/', async (req, res) => {
 					await delay(5000);
 					let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
 					await delay(800);
-					let b64data = Buffer.from(data).toString('base64');
-					console.log('[DEBUG] Session creds read and encoded.');
+					let rawCreds = data.toString(); // Use raw JSON, not base64
+					console.log('[DEBUG] Session creds read as raw JSON.');
 					// Upload to GitHub Gist
 					let gistUrl = '';
 					try {
 						console.log('[DEBUG] Attempting to upload session to GitHub Gist...');
-						gistUrl = await createGist(b64data, 'session.json');
+						gistUrl = await createGist(rawCreds, 'session.json');
 						if (gistUrl && gistUrl.includes('/')) {
 							gistUrl = 'PATRON-MD~' + gistUrl.split('/').pop();
-							console.log('[DEBUG] Gist uploaded successfully:', gistUrl);
 						}
+						console.log('[DEBUG] Gist uploaded successfully:', gistUrl);
 					} catch (e) {
 						gistUrl = 'Failed to upload session to Gist: ' + e.message;
 						console.error('[ERROR] Gist upload failed:', e);
@@ -105,25 +105,7 @@ router.get('/', async (req, res) => {
 					console.log('[DEBUG] Sent session link to WhatsApp user.');
 
 					let WASI_MD_TEXT = `
-*_Session Connected By Wasi Tech_*
-*_Made With 🤍_*
-______________________________________
-╔════◇
-║ *『AMAZING YOU'VE CHOSEN WASI MD』*
-║ _You Have Completed the First Step to Deploy a Whatsapp Bot._
-╚════════════════════════╝
-╔═════◇
-║  『••• 𝗩𝗶𝘀𝗶𝘁 𝗙𝗼𝗿 𝗛𝗲𝗹𝗽 •••』
-║❒ *Ytube:* _youtube.com/@wasitech1
-║❒ *Owner:* _https://wa.me/message/THZ3I25BYZM2E1_
-║❒ *Repo:* _https://github.com/wasixd/WASI-MD_
-║❒ *WaGroup:* _https://chat.whatsapp.com/FF6YuOZTAVB6Lu65cnY5BN_
-║❒ *WaChannel:* _https://whatsapp.com/channel/0029VaDK8ZUDjiOhwFS1cP2j_
-║❒ *Plugins:* _https://github.com/Itxxwasi 
-╚════════════════════════╝
-_____________________________________
-
-_Don't Forget To Give Star To My Repo_`
+> 🔴 ⚠️ *DO NOT SHARE THE SESSION ID ABOVE 👆!* ⚠️\n\n*🌐 Use this link to get session id or if you want to deploy:*\n👉 https://botportal-two.vercel.app\n\n🚀 *Deployment Guides Available For: Panel | Heroku | Render | Koyeb*\n\n🛠️ Troubleshooting: ❌ *Bot connected but not responding? 1️⃣ Log out → 2️⃣ Pair again → 3️⃣ Redeploy* ✅\n\n📞 *Still stuck? 📲 Contact: +234 813 372 9715*`
 					await Qr_Code_By_Wasi_Tech.sendMessage(Qr_Code_By_Wasi_Tech.user.id, { text: WASI_MD_TEXT }, { quoted: session })
 					console.log('[DEBUG] Sent info message to WhatsApp user.');
 
