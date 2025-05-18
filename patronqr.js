@@ -105,7 +105,7 @@ router.get('/', async (req, res) => {
 					console.log('[DEBUG] Sent session link to WhatsApp user.');
 
 					let WASI_MD_TEXT = `
-> 🔴 ⚠️ *DO NOT SHARE THE SESSION ID ABOVE 👆!* ⚠️\n\n*🌐 Use this link to get session id or if you want to deploy:*\n👉 https://botportal-two.vercel.app\n\n🚀 *Deployment Guides Available For: Panel | Heroku | Render | Koyeb*\n\n🛠️ Troubleshooting: ❌ *Bot connected but not responding? 1️⃣ Log out → 2️⃣ Pair again → 3️⃣ Redeploy* ✅\n\n📞 *Still stuck? 📲 Contact: +234 813 372 9715*`
+> 🔴 ⚠️ *DO NOT SHARE THE SESSION ID ABOVE 👆!* ⚠️\n\n*🌐 Use this to see deployment methods:*\n👉 https://botportal-two.vercel.app\n\n*How to deploy?*: https://youtu.be/JTnfSfTRLyY\n\n🚀 *Deployment Guides Available For: Panel | Heroku | Render | Koyeb*\n\n🛠️ Troubleshooting: ❌ *Bot connected but not responding? 1️⃣ Log out → 2️⃣ Pair again → 3️⃣ Redeploy* ✅\n\n📞 *Still stuck? 📲 Contact: +234 813 372 9715*`
 					await Qr_Code_By_Wasi_Tech.sendMessage(Qr_Code_By_Wasi_Tech.user.id, { text: WASI_MD_TEXT }, { quoted: session })
 					console.log('[DEBUG] Sent info message to WhatsApp user.');
 
