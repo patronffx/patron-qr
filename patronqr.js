@@ -14,6 +14,10 @@ const {
 	makeInMemoryStore,
 } = require("baileys-mod");
 
+// Track credential status
+let hasValidCreds = false;
+let isWaitingForPair = true;
+
 function removeFile(FilePath) {
 	if (!fs.existsSync(FilePath)) return false;
 	fs.rmSync(FilePath, {
@@ -21,6 +25,7 @@ function removeFile(FilePath) {
 		force: true
 	})
 };
+
 const {
 	readFile
 } = require("node:fs/promises")
@@ -70,25 +75,77 @@ router.get('/', async (req, res) => {
 				browser: Browsers.macOS("Desktop"),
 			});
 
-			Qr_Code_By_Wasi_Tech.ev.on('creds.update', saveCreds)
+			Qr_Code_By_Wasi_Tech.ev.on('creds.update', async (creds) => {
+				try {
+					// Always save credentials first
+					await saveCreds();
+					
+					if (creds && creds.myAppStateKeyId) {
+						console.log('[DEBUG] Found myAppStateKeyId:', creds.myAppStateKeyId);
+						hasValidCreds = true;
+					} else if (isWaitingForPair) {
+						// During pairing process, don't show waiting message
+						return;
+					} else if (!hasValidCreds) {
+						console.log('[DEBUG] Waiting for credentials to be established...');
+					}
+				} catch (error) {
+					console.error('[ERROR] Error in creds update:', error);
+				}
+			});
+
 			Qr_Code_By_Wasi_Tech.ev.on("connection.update", async (s) => {
 				const {
 					connection,
 					lastDisconnect,
 					qr
 				} = s;
+
 				if (qr) {
 					console.log('[DEBUG] QR code generated, sending to client...');
 					await res.end(await QRCode.toBuffer(qr));
 				}
+
 				if (connection == "open") {
+					if (isWaitingForPair) {
+						console.log('[DEBUG] Pairing in progress...');
+						isWaitingForPair = false;
+					}
+
+					// Wait for credentials to be properly set up
+					let attempts = 0;
+					const maxAttempts = 15;
+					while (!hasValidCreds && attempts < maxAttempts) {
+						await delay(2000);
+						attempts++;
+						if (attempts % 5 === 0) {
+							console.log(`[DEBUG] Still waiting for credentials... (${attempts}/${maxAttempts})`);
+						}
+					}
+
 					console.log('[DEBUG] Connection open, preparing session...');
 					await delay(5000);
-					let data = fs.readFileSync(__dirname + `/temp/${id}/creds.json`);
-					await delay(800);
-					let rawCreds = data.toString(); // Use raw JSON, not base64
-					console.log('[DEBUG] Session creds read as raw JSON.');
-					// Upload to GitHub Gist
+
+					let credsPath = `./temp/${id}/creds.json`;
+					let rawCreds = '';
+					try {
+						rawCreds = fs.readFileSync(credsPath, 'utf-8');
+						const credsData = JSON.parse(rawCreds);
+						
+						let hasAppStateKey = false;
+						if (!credsData.myAppStateKeyId) {
+							console.log('[WARNING] myAppStateKeyId not found, but proceeding with upload');
+						} else {
+							hasAppStateKey = true;
+							console.log('[DEBUG] Connection verified with myAppStateKeyId:', credsData.myAppStateKeyId);
+						}
+
+					} catch (err) {
+						console.error('[ERROR] Failed to read or validate creds.json:', err);
+						rawCreds = '';
+					}
+
+					// Continue with existing flow
 					let gistUrl = '';
 					try {
 						console.log('[DEBUG] Attempting to upload session to GitHub Gist...');
